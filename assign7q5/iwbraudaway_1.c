@@ -16,6 +16,7 @@
 DA *processInput(FILE *);
 bool isCKeyInsideOfMe(char *);
 bool isPrime(char *);
+//bool isCandidateInsideSeqKey(char *, char *);
 bool isSubSequence(char *, char *);
 bool check3NF(DA *);
 bool check2NF(DA *);
@@ -97,17 +98,16 @@ processInput(FILE *file)
     dependency[strlen(dependency)-1] = 0;
 
     // Insert all dependencies, ; stripped, into dependecy array which will be returned.
-    while (dependency[0] != 'x')
-    {
+	while (dependency[0] != 'x')
+	{
         insertDA(dependencies, newSTRING(dependency));
         dependency = readToken(file);
         dependency[strlen(dependency)-1] = 0;
-    }
+	}
 
-    return dependencies; 
+	return dependencies; 
 }
 
-// For each candidate key in our global array, check to see if it is equal to or fits within the key we pass in.
 bool
 isCKeyInsideOfMe(char *checkWithinMe)
 {
@@ -116,14 +116,49 @@ isCKeyInsideOfMe(char *checkWithinMe)
     {
         char *cKeyToPutIn = getSTRING(getDA(candidateKeysGlobal, i));
 
-        if ((compareSTRING(newSTRING(cKeyToPutIn), newSTRING(checkWithinMe)) == 0) || (isSubSequence(cKeyToPutIn, checkWithinMe) == true))
+        if (compareSTRING(newSTRING(cKeyToPutIn), newSTRING(checkWithinMe)) == 0)
         {
+            // printf("cKeyToPutIn: %s\n", cKeyToPutIn);
+            // printf("checkWithinMe: %s\n", checkWithinMe);
             return true;
         }
+
+        // if (isCandidateInsideSeqKey(cKeyToPutIn, checkWithinMe) == false)
+        // {
+        //     return false;
+        // }
     }
 
     return false;
 }
+
+// bool isCandidateInsideSeqKey(char *stringInside, char *superString)
+// {
+//     //printf("STRING INSIDE: %s\n", stringInside);
+//     //printf("SUPER STRING: %s\n", superString);
+//     int i;
+//     int j;
+//     int insideLen = strlen(stringInside);
+//     int outsideLen = strlen(superString);
+
+//     for (i = 0; i < outsideLen; i++)
+//     {
+//         for (j = 0; j < insideLen; j++)
+//         {
+//             if (stringInside[i] != superString[j])
+//             {
+//                 break;
+//             }
+
+//             else if (j == outsideLen-1)
+//             {
+//                 return false;
+//             }
+//         }
+//     }
+
+//     return true;
+// }
 
 bool
 isPrime(char *amIPrime)
@@ -143,28 +178,38 @@ isPrime(char *amIPrime)
 }
 
 // Returns true if stringInside is a subsequence of superString.
-bool 
-isSubSequence(char *smallString, char *largeString)
+bool isSubSequence(char *stringInside, char *superString)
 {
-    int i = 0;
-    int j = 0;
-    int smallLen = strlen(smallString);
-    int largeLen = strlen(largeString);
+    int i;
+    int j;
+    int smallLen = strlen(stringInside);
+    int largeLen = strlen(superString);
 
-    if (smallLen > largeLen)
+    for (i = 0; i < largeLen; i++)
     {
-        return false;
-    }
-
-    for (i=0; i < largeLen && j < smallLen; i++)
-    {
-        if (smallString[j] == largeString[i])
+        for (j = 0; j < smallLen; j++)
         {
-            j++;
+            if (stringInside[i] == superString[j])
+            {
+                break;
+            }
+
+            else if (j == largeLen-1)
+            {
+                return false;
+            }
         }
     }
 
-    return (j==smallLen);
+    // for (i = 0; i < largeLen && j < smallLen; i++)
+    //     if (stringInside[j] == superString[i])
+    //     {
+    //         j++;
+    //     }
+
+    // return (j==smallLen);
+
+    return true;
 }
 
 bool
@@ -181,24 +226,35 @@ check3NF(DA *dependentArray)
         
         char *parens = strtok(pairVal, ")(");
 
+        if (isPrime(parens) == false)
+        {
+            //printf("parens:%s\n", parens);
+            return false;
+        }
+
         if (isCKeyInsideOfMe(parens) == false)
         {
+            //printf("parens:%s\n", parens);
+            //printf("CONDITION WHERE CKEY NOT INSIDE\n");
             notInCKeys = true;
         }
 
         while (parens != NULL)
         {
             parens = strtok(NULL, ")(");
-
-            if ((parens != NULL) && (notInCKeys == true) && (isPrime(parens) != true))
+            //printf("parens right side:%s\n", parens);
+            if ((parens != NULL) && (notInCKeys == true) && (isPrime(parens) == false))
             {
+                    //printf("parens2:%s\n", parens);
+                //printf("Parens: %s\n", parens);
+                //printf("CONDITION WHERE BOTH SIDES FAIL\n");
                 return false;
             }
         }
     }
 
     // Else 3NF
-    return true;
+ 	return true;
 }
 
 bool
@@ -223,12 +279,13 @@ check2NF(DA *dependentArray)
         while (parens != NULL)
         {
             parens = strtok(NULL, ")(");
-            
-            if ((parens != NULL) && (primeFlag == true) && (isPrime(parens) != true))
+
+            if ((parens != NULL) && (primeFlag == true) && (isPrime(parens) == false))
             {
                 return false;
             }
         }
+        
     }
 
     // Else it is 2NF
@@ -239,14 +296,14 @@ int
 main(void)
 {
 
-    // Read in file
-    FILE *fp = fopen("./HW7in.txt", "r");
+	// Read in file
+	FILE *fp = fopen("./HW7in.txt", "r");
 
-    if (!fp)
-    {
-        printf("No input file.\n");
-        exit(-1);
-    }
+	if (!fp)
+	{
+		printf("No input file.\n");
+		exit(-1);
+	}
 
     candidateKeysGlobal = newDA(displaySTRING);
 
@@ -274,5 +331,5 @@ main(void)
         }
     }
 
-    return 0;
+	return 0;
 }
