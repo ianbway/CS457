@@ -215,7 +215,7 @@ check2NF(DA *dependentArray)
         
         char *parens = strtok(pairVal, ")(");
 
-        if (isPrime(parens) == true)
+        if ((isPrime(parens) == true) && (isCKeyInsideOfMe(parens) == false))
         {
             primeFlag = true;
         }
